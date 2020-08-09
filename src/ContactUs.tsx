@@ -1,36 +1,10 @@
 import * as React from "react";
-import {
-  Machine,
-  Sender,
-  StateNodeConfig,
-  assign,
-  AnyEventObject,
-  sendParent
-} from "xstate";
+
 import { log } from "xstate/lib/actions";
 
-type MContext = {
-  view: JSX.Element;
-};
+import { UIMachine, invokePureUI } from "./UIMachine";
 
-type RenderEvent = { type: "RENDER"; view: JSX.Element };
-
-type MEvent = RenderEvent | { type: "SEND" };
-
-const childView = (
-  render: (ctx: MContext, cb: Sender<any>) => JSX.Element
-): StateNodeConfig<MContext, any, AnyEventObject>["invoke"] => {
-  return {
-    id: "child-view",
-    autoForward: true,
-    src: (ctx) => (cb) => {
-      cb({
-        type: "RENDER",
-        view: render(ctx, cb)
-      });
-    }
-  };
-};
+type MEvent = { type: "SEND" };
 
 type propsContactUs = {
   sending?: boolean;
@@ -52,19 +26,8 @@ const ContactUs = (props: propsContactUs) => {
   );
 };
 
-export const contactUsMachine = Machine<MContext, MEvent>({
+export const contactUsMachine = UIMachine<{}, MEvent>({
   initial: "editing",
-  context: {
-    view: <ContactUs />
-  },
-  on: {
-    RENDER: {
-      actions: [
-        assign({ view: (_, evt) => (evt as RenderEvent).view }),
-        sendParent((_, evt) => evt)
-      ]
-    }
-  },
   states: {
     editing: {
       on: {
@@ -73,11 +36,11 @@ export const contactUsMachine = Machine<MContext, MEvent>({
           actions: log("Sending")
         }
       },
-      invoke: childView((_, cb) => <ContactUs onSend={() => cb("SEND")} />)
+      invoke: invokePureUI((_, cb) => <ContactUs onSend={() => cb("SEND")} />)
     },
     sending: {
       invoke: [
-        childView((_, cb) => <ContactUs sending />),
+        invokePureUI((_, cb) => <ContactUs sending />),
         {
           src: () => new Promise((resolve) => setTimeout(resolve, 1500)),
           onDone: "done"
