@@ -34,6 +34,13 @@ export const updateChild = send((context) => ({
   // to: "@react-ui-machine/child-ui"
 }));
 
+/**
+ * Create the configuration of an invoked callback that provides the
+ * machine with a rendered compnent.
+ *
+ * @param render  Given the machine's state and dispatch/send function returns a rendered ReactJS components
+ * @param options.ignoreUpdates Set to true if state context updates are not important to the component.
+ */
 export const invokeUI = <
   TContext = any,
   TEvent extends EventObject = AnyEventObject
@@ -46,8 +53,10 @@ export const invokeUI = <
   return {
     id: "@react-ui-machine/child-ui",
     src: (ctx) => (cb, onReceive) => {
+      // Execute invoked callback with first render
       cb(renderEvt(render(ctx, cb)));
 
+      // If needed, execute callback with inbcoming context updates
       !options.ignoreUpdates &&
         onReceive((evt) => {
           cb(renderEvt(render((evt as UpdateEvent<TContext>).context, cb)));
@@ -56,6 +65,9 @@ export const invokeUI = <
   };
 };
 
+/**
+ * Identical to [[invokeUI]] but sets `ignoreUpdates` to `true`
+ */
 export const invokePureUI = <
   TContext = any,
   TEvent extends EventObject = AnyEventObject
@@ -76,6 +88,13 @@ export type UIContext = {
 
 export type UIEvent<TContext> = RenderEvent | UpdateEvent<TContext>;
 
+/**
+ * Wrapper around xstate.Machine that adds context and event configuration
+ * for storing rendered ReactJS component on the machine's context object.
+ *
+ * Set `options.isRoot` to `true` if this machine should not send updates
+ * to any parent machines. Other than that see [[Machine]]
+ */
 export const UIMachine = <
   TContext = any,
   TEvent extends EventObject = AnyEventObject

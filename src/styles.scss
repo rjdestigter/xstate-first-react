@@ -3,7 +3,9 @@
   text-align: center;
 
   >div {
-    border: 1px solid Pink;
+    border: 5px solid Pink;
     padding: 16px;
+    box-shadow: 0 0 2px rgba(0,0,10px,0.5);
+    background: #fafafa;
   }
 }
